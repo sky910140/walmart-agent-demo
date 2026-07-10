@@ -58,7 +58,25 @@ Output:
 Source: https://web.ifzq.gtimg.cn/appstock/app/fqkline/get
 ```
 
-The sidecar reported 5,225 rows covering 2005-01-04 through 2026-07-10. `download-markets` also supports Shenzhen Component; the public endpoint was slow during this recorded run, so the README documents its independent retry command instead of claiming a file exists.
+The sidecar reported 5,225 rows covering 2005-01-04 through 2026-07-10.
+
+## Twenty-year Shenzhen Component snapshot
+
+Command:
+
+```powershell
+python -m finagent market --file data/market/szse_component.csv --start 2006-07-10 --end 2026-07-10
+```
+
+Output:
+
+```text
+| Symbol | Start | End | Start close | End close | Change | Avg volume |
+| sz399001 | 2006-07-10 | 2026-07-10 | 4336.24 | 15046.67 | 247.00% | 256305088 |
+Source: https://web.ifzq.gtimg.cn/appstock/app/fqkline/get
+```
+
+The checked-in sidecar reported 5,225 rows covering 2005-01-04 through 2026-07-10, with 22 annual source request URLs.
 
 ## Public web search
 
@@ -133,6 +151,16 @@ Final answer: verifier output, not the unsupported draft.
 ```
 
 The test proves the plan is actually used for retrieval and the verifier can replace a draft. It does not make an unsupported quantitative claim about relative model quality.
+
+## Live-model connectivity check
+
+Command after setting both API keys:
+
+```powershell
+python -m finagent verify-models
+```
+
+The command sends only `Return READY.` to Doubao and DeepSeek, prints `Verified <provider> / <model>` for each successful provider, and exits with code 2 if either is unavailable. It deliberately does not send filings, market records, preferences, or user questions. In the recorded development environment neither key was configured, so a real remote output is not claimed here.
 
 ## Known BM25 failure, shown deliberately
 

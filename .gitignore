@@ -4,5 +4,14 @@ __pycache__/
 .coverage
 .venv/
 .env
-data/
+data/*
+!data/market/
+data/market/*
+!data/market/README.md
+!data/market/csi300.csv
+!data/market/csi300.csv.meta.json
+!data/market/sse_composite.csv
+!data/market/sse_composite.csv.meta.json
+!data/market/szse_component.csv
+!data/market/szse_component.csv.meta.json
 sample_docs/sec_10k/

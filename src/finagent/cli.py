@@ -9,6 +9,7 @@ from pathlib import Path
 from finagent.agent import FinancialAgent, render_markdown
 from finagent.ingest import build_filing_index
 from finagent.market import download_index_history, download_major_indices, market_snapshot
+from finagent.models import ModelGateway
 from finagent.sec import download_sec_10k
 
 
@@ -50,6 +51,8 @@ def build_parser() -> argparse.ArgumentParser:
     download_markets.add_argument("--start-year", type=int, default=2005)
     download_markets.add_argument("--end-year", type=int)
 
+    subcommands.add_parser("verify-models", help="Verify live connectivity to the two required primary models without sending financial documents")
+
     index = subcommands.add_parser("index", help="Build local filing chunks from the SEC manifest")
     index.add_argument("--docs-dir", type=Path, default=Path("sample_docs/sec_10k"))
     index.add_argument("--output", type=Path, default=Path("data/index/filing_chunks.json"))
@@ -73,6 +76,20 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _verify_models(gateway: ModelGateway) -> int:
+    for provider in ("doubao", "deepseek"):
+        response = gateway.complete(
+            provider,
+            "You are a connectivity check. Reply with exactly READY.",
+            "Return READY.",
+        )
+        if not response.used_remote_model:
+            print(f"Model verification failed for {provider}: {response.error or 'remote model unavailable'}", file=sys.stderr)
+            return 2
+        print(f"Verified {provider} / {response.model}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     try:
         _configure_console_encoding(sys.stdout, sys.stderr)
@@ -90,6 +107,8 @@ def main(argv: list[str] | None = None) -> int:
             counts = download_major_indices(args.output_dir, start_year=args.start_year, end_year=args.end_year)
             print("Downloaded major A-share indices: " + ", ".join(f"{name}={count}" for name, count in counts.items()))
             return 0
+        if args.command == "verify-models":
+            return _verify_models(ModelGateway())
         if args.command == "index":
             documents, chunks = build_filing_index(args.docs_dir, args.output, chunk_size=args.chunk_size)
             print(f"Indexed {documents} SEC filings into {chunks} chunks at {args.output}")

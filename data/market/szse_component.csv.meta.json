@@ -1,0 +1,37 @@
+{
+  "symbol": "sz399001",
+  "source_name": "Tencent Finance K-line API",
+  "source_url": "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get",
+  "request_urls": [
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2005-01-01%2C2005-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2006-01-01%2C2006-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2007-01-01%2C2007-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2008-01-01%2C2008-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2009-01-01%2C2009-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2010-01-01%2C2010-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2011-01-01%2C2011-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2012-01-01%2C2012-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2013-01-01%2C2013-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2014-01-01%2C2014-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2015-01-01%2C2015-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2016-01-01%2C2016-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2017-01-01%2C2017-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2018-01-01%2C2018-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2019-01-01%2C2019-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2020-01-01%2C2020-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2021-01-01%2C2021-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2022-01-01%2C2022-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2023-01-01%2C2023-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2024-01-01%2C2024-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2025-01-01%2C2025-12-31%2C640%2Cqfq",
+    "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sz399001%2Cday%2C2026-01-01%2C2026-12-31%2C640%2Cqfq"
+  ],
+  "downloaded_at": "2026-07-10T14:58:52.940618+00:00",
+  "row_count": 5225,
+  "coverage_start": "2005-01-04",
+  "coverage_end": "2026-07-10",
+  "fields": {
+    "close": "daily close",
+    "volume": "daily volume as returned by source"
+  }
+}

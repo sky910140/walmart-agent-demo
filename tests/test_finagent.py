@@ -5,7 +5,7 @@ import io
 import json
 import tempfile
 import unittest
-from contextlib import redirect_stderr
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
@@ -235,13 +235,15 @@ class FinancialAgentTests(unittest.TestCase):
             root = Path(directory)
             market_file = root / "bad.csv"
             market_file.write_text("date,close\n2024-01-01,3300\n", encoding="utf-8")
-            response = FinancialAgent(
-                index_path=root / "absent-index.json",
-                memory_path=root / "memory.json",
-                market_path=market_file,
-            ).ask("How did the CSI 300 index perform?")
+            with self.assertLogs("finagent.agent", level="WARNING") as logs:
+                response = FinancialAgent(
+                    index_path=root / "absent-index.json",
+                    memory_path=root / "memory.json",
+                    market_path=market_file,
+                ).ask("How did the CSI 300 index perform?")
 
         self.assertEqual(len(response.warnings), 1)
+        self.assertIn("Market data unavailable", logs.output[0])
         self.assertIn("Market data unavailable", response.warnings[0])
         self.assertIn("## Data warnings", render_markdown(response))
 
@@ -320,6 +322,34 @@ class FinancialAgentTests(unittest.TestCase):
 
         self.assertEqual(stdout.calls, [{"encoding": "utf-8", "errors": "replace"}])
         self.assertEqual(stderr.calls, [{"encoding": "utf-8", "errors": "replace"}])
+
+    def test_verify_models_reports_both_required_remote_providers(self) -> None:
+        class VerifiedGateway:
+            def complete(self, provider: str, system: str, user: str) -> ModelResponse:
+                model = "doubao-seed-evolving" if provider == "doubao" else "deepseek-v4"
+                return ModelResponse(provider, model, "READY", True)
+
+        stdout = io.StringIO()
+        with patch("finagent.cli.ModelGateway", return_value=VerifiedGateway()), redirect_stdout(stdout):
+            exit_code = main(["verify-models"])
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn("Verified doubao / doubao-seed-evolving", stdout.getvalue())
+        self.assertIn("Verified deepseek / deepseek-v4", stdout.getvalue())
+
+    def test_verify_models_fails_when_a_required_provider_is_offline(self) -> None:
+        class PartialGateway:
+            def complete(self, provider: str, system: str, user: str) -> ModelResponse:
+                if provider == "doubao":
+                    return ModelResponse("doubao", "doubao-seed-evolving", "READY", True)
+                return ModelResponse("offline", "deepseek-v4", "", False, "API key is not configured")
+
+        stderr = io.StringIO()
+        with patch("finagent.cli.ModelGateway", return_value=PartialGateway()), redirect_stdout(io.StringIO()), redirect_stderr(stderr):
+            exit_code = main(["verify-models"])
+
+        self.assertEqual(exit_code, 2)
+        self.assertIn("Model verification failed for deepseek", stderr.getvalue())
 
     def test_web_search_unwraps_duckduckgo_redirects(self) -> None:
         self.assertEqual(

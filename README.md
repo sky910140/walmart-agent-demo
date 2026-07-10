@@ -34,7 +34,7 @@ python scripts/download_sec_10k.py --years 1 --output-dir sample_docs/sec_10k
 python -m finagent index --docs-dir sample_docs/sec_10k --output data/index/filing_chunks.json
 ```
 
-`download-markets` requests CSI 300, Shanghai Composite, and Shenzhen Component as separate auditable files. Each request can also be retried independently with `download-market --symbol sh000001` or `--symbol sz399001`. The first SEC download collects ten companies' latest 10-Ks. To collect five annual filings per company, use `--years 5`; allow more time and ensure the identity is your own. Raw downloaded documents and generated data are deliberately ignored by Git, but the commands reproduce them without hidden steps.
+`download-markets` requests CSI 300, Shanghai Composite, and Shenzhen Component as separate auditable files. Each request can also be retried independently with `download-market --symbol sh000001` or `--symbol sz399001`. The checked-in market CSVs and metadata support offline market demos; see `data/market/README.md`. The first SEC download collects ten companies' latest 10-Ks. To collect five annual filings per company, use `--years 5`; allow more time and ensure the identity is your own. Raw SEC documents, generated filing indexes, and user memory remain ignored by Git but are reproduced by the documented commands.
 
 Run an offline, fully cited demo without any model key:
 
@@ -72,6 +72,14 @@ verification: deepseek / deepseek-v4 / remote=True
 ```
 
 If a remote call fails or its answer has no valid evidence label, the agent falls back to the local extractive response. This is intentional: availability must not become unsupported financial prose.
+
+Before a live interview, verify both configured credentials without sending any filing, market data, or user question:
+
+```powershell
+python -m finagent verify-models
+```
+
+It sends only a fixed `READY` connectivity prompt to each provider and exits with code 2 when either required model is unavailable.
 
 ## Data and provenance
 

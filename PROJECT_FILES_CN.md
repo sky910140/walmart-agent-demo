@@ -4,14 +4,14 @@
 
 本项目是一个可本地运行、证据优先的金融研究 Personal Agent。它不执行交易、不输出投资建议，也不把模型生成的文字当作数据源。它的主路径是：下载公开数据，保留可追溯元数据，检索本地证据，再由两个指定模型完成受约束的分析和核验；没有模型密钥时，仍返回明确标识为离线提取模式的带引用结果。
 
-仓库源码不包含下载后的 SEC 原始 HTML、市场 CSV、索引和用户记忆。这些内容可能较大、可能过期或包含个人偏好，因此由 `.gitignore` 排除，但 README 中的命令可完整复现。
+仓库不包含下载后的 SEC 原始 HTML、filing 索引和用户记忆。这些内容可能较大、可能过期或包含个人偏好，因此由 `.gitignore` 排除，但 README 中的命令可完整复现。三组市场 CSV 与来源元数据例外：它们体积小、是离线 demo 的核心依赖，已随源码提交。
 
 ## 2. 目录与文件清单
 
 | 路径 | 作用 | 是否进入 Git |
 | --- | --- | --- |
 | `.env.example` | 两个模型、SEC User-Agent 的环境变量模板；没有真实密钥 | 是 |
-| `.gitignore` | 忽略 `.env`、虚拟环境、生成数据、SEC 原始文件、缓存 | 是 |
+| `.gitignore` | 忽略 `.env`、虚拟环境、SEC 原始文件、filing 索引和记忆；显式放行三组市场 CSV/元数据 | 是 |
 | `pyproject.toml` | Python 包元数据、`src` 布局和 `finagent` 命令入口 | 是 |
 | `requirements-dev.txt` | 可选 `pytest`、`coverage` 开发依赖；运行时无第三方依赖 | 是 |
 | `README.md` | 英文安装、配置、数据下载、命令、数据来源和限制说明 | 是 |
@@ -34,7 +34,7 @@
 | `src/finagent/memory.py` | 用户 ID 隔离的 JSON 长期偏好存储与显式意图检测 | 是 |
 | `src/finagent/sources.py` | `EvidenceChunk`、`Citation`、`SearchResult` 的稳定数据结构 | 是 |
 | `tests/test_finagent.py` | 单元与集成测试：来源、检索、记忆、模型守卫、市场、SEC、CLI、Web | 是 |
-| `data/market/` | 生成的市场 CSV 与 `.meta.json`；当前可有 `csi300.csv`、`sse_composite.csv` | 否 |
+| `data/market/` | 已提交的三组市场 CSV、`.meta.json` 和数据说明；支持离线市场 demo | 是 |
 | `data/index/` | 生成的 `filing_chunks.json` | 否 |
 | `data/memory/` | 用户偏好 JSON；不应提交 | 否 |
 | `sample_docs/sec_10k/` | SEC 原始 HTML、`manifest.jsonl`、`download_report.json` | 否 |
@@ -64,6 +64,7 @@ SEC 下载会请求 Apple、Microsoft、NVIDIA、Amazon、Alphabet、Tesla、JPM
 | `download-sec` | `--output-dir`、`--years`、`--user-agent` | 下载原始 10-K，写 `manifest.jsonl` 与 `download_report.json` |
 | `download-market` | `--output`、`--symbol`、`--start-year`、`--end-year` | 下载一个指数。`sh000300`、`sh000001`、`sz399001` 分别对应沪深 300、上证综指、深证成指 |
 | `download-markets` | `--output-dir`、年份范围 | 顺序下载上述三组数据到独立 CSV；任一网络失败可改用单指数命令重跑 |
+| `verify-models` | 无参数；读取 `.env` 或环境变量 | 以固定 `READY` prompt 验证 Doubao 与 DeepSeek 连通性，不发送金融数据或用户内容 |
 | `index` | `--docs-dir`、`--output`、`--chunk-size` | 从 manifest 对应 HTML 构建本地 chunk 索引 |
 | `market` | `--file`、`--start`、`--end` | 输出日收盘价、区间涨跌幅、平均成交量的 Markdown 表格和来源 URL |
 | `ask` | 问题、`--company`、`--user`、`--web`、`--json`、`--trace`、`--market-file` | 输出带 `[S#]` 引用的 Markdown 或 JSON；可选 Web、用户记忆、执行轨迹 |
@@ -94,7 +95,7 @@ HTML 解析会去掉脚本、样式、inline-XBRL header/hidden/resources/contex
 6. Doubao `doubao-seed-evolving` 只能根据已给证据起草；DeepSeek V4 再核验并改写。若远程回答没有合法 `[S#]`，系统拒绝它，退回离线提取答案。
 7. Markdown 输出显示答案、Sources、可选 Data warnings、可选 Agent trace；JSON 输出包含同等结构化字段。
 
-模型密钥只能来自环境变量或 `.env`：`DOUBAO_API_KEY`、`DEEPSEEK_API_KEY`。没有密钥或远程请求失败时，trace 明确记录 `offline` 和原因。代码不会打印密钥、Authorization header 或模型请求体。
+模型密钥只能来自环境变量或 `.env`：`DOUBAO_API_KEY`、`DEEPSEEK_API_KEY`。没有密钥或远程请求失败时，trace 明确记录 `offline` 和原因。运行 `python -m finagent verify-models` 可在面试前验证两家 provider；它只发送固定 `READY` prompt。代码不会打印密钥、Authorization header 或模型请求体。
 
 ## 7. 输出结构
 
@@ -110,7 +111,7 @@ python -m unittest discover -s tests -v
 python -m compileall -q src scripts tests
 ```
 
-当前测试覆盖：chunk 来源字段、BM25 排序、中文 bigram、市场快照与坏 CSV、三大指数批量参数、显式偏好与持久化、离线模型状态、规划词影响检索、核验改写草稿、SEC User-Agent、manifest 历史记录保留、XBRL 噪声识别、索引到 Agent、Web URL 解包、Web 证据类型、UTF-8 控制台配置、CLI 友好错误和市场数据 warning。没有把网络请求或真实模型调用写入单元测试；这些调用以 mock 隔离，真实命令记录在 `DEMO_OUTPUTS.md`。
+当前 24 项测试覆盖：chunk 来源字段、BM25 排序、中文 bigram、市场快照与坏 CSV、三大指数批量参数、显式偏好与持久化、离线模型状态、规划词影响检索、核验改写草稿、SEC User-Agent、manifest 历史记录保留、XBRL 噪声识别、索引到 Agent、Web URL 解包、Web 证据类型、UTF-8 控制台配置、CLI 友好错误和市场数据 warning、`verify-models` 的成功/失败退出码。没有把网络请求或真实模型调用写入单元测试；这些调用以 mock 隔离，真实命令记录在 `DEMO_OUTPUTS.md`。
 
 ## 9. 已知限制与现场使用建议
 
