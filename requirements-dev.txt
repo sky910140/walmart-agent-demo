@@ -1,0 +1,4 @@
+# The runtime has no mandatory third-party dependency.
+# Install this only when you prefer pytest's test runner.
+pytest>=8.0
+coverage>=7.6

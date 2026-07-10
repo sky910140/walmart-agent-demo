@@ -1,0 +1,125 @@
+from __future__ import annotations
+
+import json
+import os
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+from urllib.request import Request, urlopen
+
+
+SEC_SUBMISSIONS_URL = "https://data.sec.gov/submissions/CIK{cik:010d}.json"
+SEC_ARCHIVE_URL = "https://www.sec.gov/Archives/edgar/data/{cik}/{accession}/{document}"
+
+COMPANIES: tuple[tuple[str, str, int], ...] = (
+    ("AAPL", "Apple Inc.", 320193),
+    ("MSFT", "Microsoft Corporation", 789019),
+    ("NVDA", "NVIDIA Corporation", 1045810),
+    ("AMZN", "Amazon.com, Inc.", 1018724),
+    ("GOOGL", "Alphabet Inc.", 1652044),
+    ("TSLA", "Tesla, Inc.", 1318605),
+    ("JPM", "JPMorgan Chase & Co.", 19617),
+    ("BRK-B", "Berkshire Hathaway Inc.", 1067983),
+    ("WMT", "Walmart Inc.", 104169),
+    ("XOM", "Exxon Mobil Corporation", 34088),
+)
+
+
+@dataclass(frozen=True)
+class FilingRecord:
+    document_id: str
+    ticker: str
+    company: str
+    cik: int
+    form: str
+    report_date: str
+    filing_date: str
+    accession_number: str
+    primary_document: str
+    source_url: str
+    local_path: str
+    downloaded_at: str
+    source_type: str = "sec_10k"
+
+
+def validate_sec_user_agent(value: str | None) -> str:
+    candidate = (value or os.getenv("SEC_USER_AGENT", "")).strip()
+    if not candidate or "@" not in candidate or "\n" in candidate or "\r" in candidate:
+        raise ValueError("SEC_USER_AGENT must identify the app and include a contact email, for example: FinancialAgent name@example.com")
+    return candidate
+
+
+def download_sec_10k(
+    output_dir: Path,
+    *,
+    years: int = 1,
+    user_agent: str | None = None,
+    companies: tuple[tuple[str, str, int], ...] = COMPANIES,
+) -> list[FilingRecord]:
+    """Download the most recent 10-K documents and an append-only source manifest."""
+    if years < 1:
+        raise ValueError("years must be at least 1")
+    contact = validate_sec_user_agent(user_agent)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    records: list[FilingRecord] = []
+    errors: list[str] = []
+    for ticker, company, cik in companies:
+        try:
+            submissions = _get_json(SEC_SUBMISSIONS_URL.format(cik=cik), contact)
+            recent = submissions.get("filings", {}).get("recent", {})
+            selected = [
+                index for index, form in enumerate(recent.get("form", []))
+                if form == "10-K"
+            ][:years]
+            if not selected:
+                errors.append(f"{ticker}: no 10-K in SEC recent submissions")
+                continue
+            for index in selected:
+                accession = recent["accessionNumber"][index]
+                primary_document = recent["primaryDocument"][index]
+                filing_date = recent["filingDate"][index]
+                report_date = recent.get("reportDate", [""] * len(recent["form"]))[index]
+                source_url = SEC_ARCHIVE_URL.format(cik=cik, accession=accession.replace("-", ""), document=primary_document)
+                payload = _get_bytes(source_url, contact)
+                document_id = f"{ticker.lower()}-{report_date or filing_date}-10k-{accession.replace('-', '')}"
+                filename = f"{document_id}.html"
+                target = output_dir / filename
+                target.write_bytes(payload)
+                records.append(FilingRecord(
+                    document_id=document_id,
+                    ticker=ticker,
+                    company=company,
+                    cik=cik,
+                    form="10-K",
+                    report_date=report_date,
+                    filing_date=filing_date,
+                    accession_number=accession,
+                    primary_document=primary_document,
+                    source_url=source_url,
+                    local_path=filename,
+                    downloaded_at=datetime.now(UTC).isoformat(),
+                ))
+        except Exception as exc:  # Keep other public-company downloads progressing.
+            errors.append(f"{ticker}: {type(exc).__name__}: {exc}")
+
+    manifest = output_dir / "manifest.jsonl"
+    manifest.write_text("".join(json.dumps(asdict(record), ensure_ascii=False) + "\n" for record in records), encoding="utf-8")
+    (output_dir / "download_report.json").write_text(json.dumps({
+        "downloaded_at": datetime.now(UTC).isoformat(),
+        "requested_companies": len(companies),
+        "years_per_company": years,
+        "downloaded_documents": len(records),
+        "errors": errors,
+        "sec_user_agent_configured": True,
+    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    return records
+
+
+def _get_json(url: str, user_agent: str) -> dict[str, object]:
+    return json.loads(_get_bytes(url, user_agent).decode("utf-8"))
+
+
+def _get_bytes(url: str, user_agent: str) -> bytes:
+    request = Request(url, headers={"User-Agent": user_agent})
+    with urlopen(request, timeout=60) as response:
+        return response.read()
