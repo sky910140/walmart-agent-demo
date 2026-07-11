@@ -58,7 +58,7 @@ Copy `.env.example` to `.env`, then supply only the two permitted primary model 
 DOUBAO_API_KEY=...
 DOUBAO_MODEL=doubao-seed-evolving
 DEEPSEEK_API_KEY=...
-DEEPSEEK_MODEL=deepseek-v4
+DEEPSEEK_MODEL=deepseek-v4-pro
 ```
 
 The default endpoints are Ark's OpenAI-compatible chat endpoint and DeepSeek's chat endpoint; override `DOUBAO_BASE_URL` or `DEEPSEEK_BASE_URL` only if the provider's deployment endpoint differs. Keys are read from environment or `.env`, never logged, and `.env` is ignored by Git.
@@ -66,9 +66,9 @@ The default endpoints are Ark's OpenAI-compatible chat endpoint and DeepSeek's c
 With both keys configured, the execution trace should show:
 
 ```text
-planning: deepseek / deepseek-v4 / remote=True
+planning: deepseek / deepseek-v4-pro / remote=True
 analysis: doubao / doubao-seed-evolving / remote=True
-verification: deepseek / deepseek-v4 / remote=True
+verification: deepseek / deepseek-v4-pro / remote=True
 ```
 
 If a remote call fails or its answer has no valid evidence label, the agent falls back to the local extractive response. This is intentional: availability must not become unsupported financial prose.

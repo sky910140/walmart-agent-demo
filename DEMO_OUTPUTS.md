@@ -118,9 +118,9 @@ Selected second-response fields:
   "evidence_count": 7,
   "warnings": [],
   "model_trace": [
-    {"stage": "planning", "provider": "offline", "model": "deepseek-v4"},
+    {"stage": "planning", "provider": "offline", "model": "deepseek-v4-pro"},
     {"stage": "analysis", "provider": "offline", "model": "doubao-seed-evolving"},
-    {"stage": "verification", "provider": "offline", "model": "deepseek-v4"}
+    {"stage": "verification", "provider": "offline", "model": "deepseek-v4-pro"}
   ]
 }
 ```
@@ -160,7 +160,12 @@ Command after setting both API keys:
 python -m finagent verify-models
 ```
 
-The command sends only `Return READY.` to Doubao and DeepSeek, prints `Verified <provider> / <model>` for each successful provider, and exits with code 2 if either is unavailable. It deliberately does not send filings, market records, preferences, or user questions. In the recorded development environment neither key was configured, so a real remote output is not claimed here.
+The command sends only `Return READY.` to Doubao and DeepSeek, prints `Verified <provider> / <model>` for each successful provider, and exits with code 2 if either is unavailable. It deliberately does not send filings, market records, preferences, or user questions. After configuring the local `.env` on 2026-07-11, the recorded result was:
+
+```text
+Verified doubao / doubao-seed-evolving
+Verified deepseek / deepseek-v4-pro
+```
 
 ## Known BM25 failure, shown deliberately
 

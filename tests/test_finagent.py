@@ -3,10 +3,12 @@ from __future__ import annotations
 import csv
 import io
 import json
+import os
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from urllib.error import HTTPError
 from unittest.mock import patch
 
 from finagent.agent import FinancialAgent, render_markdown
@@ -21,6 +23,14 @@ from finagent.websearch import WebResult, _result_url
 
 
 class FinancialAgentTests(unittest.TestCase):
+    def setUp(self) -> None:
+        # CLI tests load .env; keep the unit suite offline even on a configured developer machine.
+        self._model_keys = patch.dict(os.environ, {"DOUBAO_API_KEY": "", "DEEPSEEK_API_KEY": ""}, clear=False)
+        self._model_keys.start()
+
+    def tearDown(self) -> None:
+        self._model_keys.stop()
+
     def test_chunks_keep_verifiable_source_metadata(self) -> None:
         chunks = chunk_document(
             document_id="acme-2025-10k",
@@ -103,6 +113,18 @@ class FinancialAgentTests(unittest.TestCase):
         self.assertEqual(result.provider, "offline")
         self.assertFalse(result.used_remote_model)
         self.assertNotIn("api_key", result.text.lower())
+
+    def test_model_gateway_defaults_to_supported_deepseek_v4_model_name(self) -> None:
+        gateway = ModelGateway(doubao_api_key=None, deepseek_api_key=None)
+
+        self.assertEqual(gateway.providers["deepseek"]["model"], "deepseek-v4-pro")
+
+    def test_model_gateway_reports_safe_http_status_without_response_body(self) -> None:
+        with patch("finagent.models.urlopen", side_effect=HTTPError("https://example.com", 404, "Not Found", None, None)):
+            result = ModelGateway(doubao_api_key="test-key", deepseek_api_key=None).complete("doubao", "system", "user")
+
+        self.assertFalse(result.used_remote_model)
+        self.assertEqual(result.error, "HTTP 404: remote request unavailable")
 
     def test_index_and_agent_produce_an_offline_cited_answer(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -278,8 +300,8 @@ class FinancialAgentTests(unittest.TestCase):
                 if provider == "deepseek":
                     self.deepseek_calls += 1
                     if self.deepseek_calls == 1:
-                        return ModelResponse("deepseek", "deepseek-v4", "liquidity debt maturity", True)
-                    return ModelResponse("deepseek", "deepseek-v4", "Verifier kept only cited evidence. [S1]", True)
+                        return ModelResponse("deepseek", "deepseek-v4-pro", "liquidity debt maturity", True)
+                    return ModelResponse("deepseek", "deepseek-v4-pro", "Verifier kept only cited evidence. [S1]", True)
                 return ModelResponse("doubao", "doubao-seed-evolving", "Unsupported growth claim without a citation.", True)
 
         with tempfile.TemporaryDirectory() as directory:
@@ -326,7 +348,7 @@ class FinancialAgentTests(unittest.TestCase):
     def test_verify_models_reports_both_required_remote_providers(self) -> None:
         class VerifiedGateway:
             def complete(self, provider: str, system: str, user: str) -> ModelResponse:
-                model = "doubao-seed-evolving" if provider == "doubao" else "deepseek-v4"
+                model = "doubao-seed-evolving" if provider == "doubao" else "deepseek-v4-pro"
                 return ModelResponse(provider, model, "READY", True)
 
         stdout = io.StringIO()
@@ -335,14 +357,14 @@ class FinancialAgentTests(unittest.TestCase):
 
         self.assertEqual(exit_code, 0)
         self.assertIn("Verified doubao / doubao-seed-evolving", stdout.getvalue())
-        self.assertIn("Verified deepseek / deepseek-v4", stdout.getvalue())
+        self.assertIn("Verified deepseek / deepseek-v4-pro", stdout.getvalue())
 
     def test_verify_models_fails_when_a_required_provider_is_offline(self) -> None:
         class PartialGateway:
             def complete(self, provider: str, system: str, user: str) -> ModelResponse:
                 if provider == "doubao":
                     return ModelResponse("doubao", "doubao-seed-evolving", "READY", True)
-                return ModelResponse("offline", "deepseek-v4", "", False, "API key is not configured")
+                return ModelResponse("offline", "deepseek-v4-pro", "", False, "API key is not configured")
 
         stderr = io.StringIO()
         with patch("finagent.cli.ModelGateway", return_value=PartialGateway()), redirect_stdout(io.StringIO()), redirect_stderr(stderr):

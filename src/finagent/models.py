@@ -38,7 +38,7 @@ class ModelGateway:
             "deepseek": {
                 "key": deepseek_api_key if deepseek_api_key is not None else os.getenv("DEEPSEEK_API_KEY"),
                 "base_url": deepseek_base_url or os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/chat/completions"),
-                "model": deepseek_model or os.getenv("DEEPSEEK_MODEL", "deepseek-v4"),
+                "model": deepseek_model or os.getenv("DEEPSEEK_MODEL", "deepseek-v4-pro"),
             },
         }
 
@@ -65,5 +65,7 @@ class ModelGateway:
                 body = json.loads(response.read().decode("utf-8"))
             text = body["choices"][0]["message"]["content"].strip()
             return ModelResponse(provider, str(settings["model"]), text, True)
-        except (HTTPError, URLError, TimeoutError, KeyError, IndexError, json.JSONDecodeError) as exc:
+        except HTTPError as exc:
+            return ModelResponse("offline", str(settings["model"]), "", False, f"HTTP {exc.code}: remote request unavailable")
+        except (URLError, TimeoutError, KeyError, IndexError, json.JSONDecodeError) as exc:
             return ModelResponse("offline", str(settings["model"]), "", False, f"{type(exc).__name__}: remote request unavailable")
