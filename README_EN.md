@@ -1,6 +1,6 @@
 # Financial Agent Take-Home
 
-[中文文档](README_CN.md) | English
+[中文](README.md) | English
 
 An evidence-first personal financial research agent for public financial documents and China index history. It answers from local SEC 10-K chunks and optional public-web snippets, then renders every source with a URL and locator. It is intentionally small enough to inspect and run live.
 

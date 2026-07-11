@@ -1,6 +1,6 @@
 # Financial Agent Take-Home
 
-中文 | [English](README.md)
+中文 | [English](README_EN.md)
 
 这是一个以证据为中心的金融研究 Personal Agent。它面向公开金融文件和中国市场指数数据：先检索本地证据，再生成带来源的回答。每条引用保留 URL、日期、文档 ID、accession 和 chunk 定位信息，便于 reviewer 复核。
 
