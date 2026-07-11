@@ -42,6 +42,16 @@ Offline extractive mode is active because one or both required model credentials
 
 The trace reported DeepSeek V4 as planner/verifier and `doubao-seed-evolving` as analyst, all `remote=False` because no credentials were supplied. With both configured, the same evidence is sent to the two-model loop and remote output is accepted only when it retains valid `[S#]` labels.
 
+## Safe standalone HTML report
+
+Command:
+
+```powershell
+python -m finagent ask "Summarize liquidity and debt-related risks." --company Apple --html --trace > apple-liquidity-report.html
+```
+
+The generated file is a self-contained browser report with the answer, source list, remembered preferences, data warnings, and optional execution trace. It starts with `<!doctype html>` and embeds no JavaScript. Dynamic model, filing, and web-search text is HTML-escaped; only absolute `http/https` provenance URLs become external links, with `rel="noopener noreferrer"` and a restrictive Content Security Policy meta tag. The regression tests exercise both an attempted `<script>` answer and a `javascript:` source URL.
+
 ## Twenty-year Shanghai Composite snapshot
 
 Command:

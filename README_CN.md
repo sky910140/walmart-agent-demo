@@ -15,7 +15,7 @@
 - 每个 filing chunk 保存原文片段、source URL、filing date、source type、accession 和 chunk ID。
 - 按 user ID 持久化的长期偏好记忆。仅在“我关心”“focus”“I'm interested in”“关注/感兴趣”等明确表达出现时写入。
 - 两模型协同：DeepSeek V4 Pro 做检索规划和引用核验，`doubao-seed-evolving` 根据证据起草。没有第三个主推理模型。
-- Markdown、JSON、市场表格、source list、数据 warning 和非敏感执行 trace。
+- Markdown、JSON、安全的独立 HTML 报告、市场表格、source list、数据 warning 和非敏感执行 trace。
 - 没有模型密钥时，系统返回明确标识的离线提取答案，不会伪装成模型推理结果。
 
 ## 快速开始
@@ -109,6 +109,7 @@ python -m finagent ask "What are this company's main risk factors?" --company Te
 python -m finagent ask "How did revenue or profitability change compared with the prior year?" --company Microsoft
 python -m finagent ask "What does the company say about competition?" --company Amazon
 python -m finagent ask "Summarize liquidity or debt-related risks." --company Apple
+python -m finagent ask "Summarize liquidity or debt-related risks." --company Apple --html > apple-liquidity-report.html
 
 # 用户长期偏好
 python -m finagent ask "I care most about liquidity risk and debt maturity." --company JPM --user alice
@@ -130,9 +131,9 @@ python -m finagent ask "Apple 10-K SEC filing" --company no-such-company --web -
 | `verify-models` | 不发送金融数据地验证两家模型的真实连通性 |
 | `index` | 将 SEC manifest 对应文件构建为本地 chunks |
 | `market` | 输出指定日期区间的价格、涨跌幅、平均成交量表格 |
-| `ask` | 发起带引用的 filing、市场或 Web 问答 |
+| `ask` | 发起带引用的 filing、市场或 Web 问答；可输出 Markdown、JSON 或安全 HTML |
 
-为机器集成添加 `--json`；为演示模型阶段添加 `--trace`；为 Web 检索添加 `--web`。
+为机器集成添加 `--json`；为可直接在浏览器打开的独立报告添加 `--html`；为演示模型阶段添加 `--trace`；为 Web 检索添加 `--web`。HTML 会转义所有动态文本，只为绝对 `http/https` 来源 URL 生成链接，并包含限制性 CSP meta 策略。`--json` 与 `--html` 互斥。
 
 ## 测试
 
@@ -142,7 +143,7 @@ python -m unittest discover -s tests -v
 python -m compileall -q src scripts tests
 ```
 
-当前 26 项测试覆盖 chunk 来源、BM25 与中文 bigram、市场数据校验、三指数、偏好记忆、SEC manifest、XBRL 过滤、Agent 引用守卫、Web URL、CLI 错误、UTF-8 输出、模型连通性成功/失败，以及配置 `.env` 时的测试隔离。
+当前 29 项测试覆盖 chunk 来源、BM25 与中文 bigram、市场数据校验、三指数、偏好记忆、SEC manifest、XBRL 过滤、Agent 引用守卫、Web URL、CLI 错误、UTF-8 输出、模型连通性成功/失败、安全 HTML 转义与 CLI 输出，以及配置 `.env` 时的测试隔离。
 
 ## 设计边界与取舍
 
@@ -151,6 +152,6 @@ python -m compileall -q src scripts tests
 - Web snippet 是发现工具，不是一级财务证据；其类型始终保留为 `web_search`。
 - 偏好 memory 是单用户 demo 的本地 JSON，没有认证、加密、删除 API、短期会话上下文或并发控制。
 - 市场自然语言问答默认使用本地文件覆盖区间；精确日期区间使用 `market --start --end`。
-- 不实现多轮 chat UI、HTML/PPT、向量数据库或全市场个股数据，是为了优先保证引用、可解释性、离线降级和现场可运行性。
+- 不实现多轮 chat UI、PPT、向量数据库或全市场个股数据，是为了优先保证引用、可解释性、离线降级和现场可运行性。HTML 已实现为不执行脚本、也不渲染任意用户 HTML 的静态报告格式。
 
 进一步的系统设计、文件说明、审查整改与未来优先级见：[DESIGN.md](DESIGN.md)、[PROJECT_FILES_CN.md](PROJECT_FILES_CN.md)、[REMEDIATION_CN.md](REMEDIATION_CN.md)。

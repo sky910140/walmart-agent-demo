@@ -6,7 +6,7 @@ import os
 import sys
 from pathlib import Path
 
-from finagent.agent import FinancialAgent, render_markdown
+from finagent.agent import FinancialAgent, render_html, render_markdown
 from finagent.ingest import build_filing_index
 from finagent.market import download_index_history, download_major_indices, market_snapshot
 from finagent.models import ModelGateway
@@ -71,7 +71,9 @@ def build_parser() -> argparse.ArgumentParser:
     ask.add_argument("--memory", type=Path, default=Path("data/memory/preferences.json"))
     ask.add_argument("--market-file", type=Path, default=Path("data/market/csi300.csv"))
     ask.add_argument("--web", action="store_true", help="Add explicitly-labelled public-web search snippets")
-    ask.add_argument("--json", action="store_true", help="Write machine-readable response JSON")
+    output_format = ask.add_mutually_exclusive_group()
+    output_format.add_argument("--json", action="store_true", help="Write machine-readable response JSON")
+    output_format.add_argument("--html", action="store_true", help="Write a self-contained, safe HTML research report")
     ask.add_argument("--trace", action="store_true", help="Include non-secret agent execution trace")
     return parser
 
@@ -125,6 +127,8 @@ def main(argv: list[str] | None = None) -> int:
         response = agent.ask(args.question, user_id=args.user, company=args.company, include_web=args.web)
         if args.json:
             print(json.dumps(response.to_dict(), ensure_ascii=False, indent=2))
+        elif args.html:
+            print(render_html(response, include_trace=args.trace))
         else:
             print(render_markdown(response, include_trace=args.trace))
         return 0

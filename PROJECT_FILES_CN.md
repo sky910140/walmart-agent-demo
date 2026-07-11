@@ -23,8 +23,8 @@
 | `scripts/download_market_data.py` | 市场数据下载脚本入口，内部转发到 CLI | 是 |
 | `src/finagent/__init__.py` | 包说明和版本号 | 是 |
 | `src/finagent/__main__.py` | 支持 `python -m finagent` | 是 |
-| `src/finagent/cli.py` | argparse 命令、UTF-8 控制台配置、错误边界、Markdown/JSON 输出 | 是 |
-| `src/finagent/agent.py` | Agent 编排、规划检索扩展、市场/Web 证据、草稿/核验守卫、引用渲染 | 是 |
+| `src/finagent/cli.py` | argparse 命令、UTF-8 控制台配置、错误边界、Markdown/JSON/HTML 输出 | 是 |
+| `src/finagent/agent.py` | Agent 编排、规划检索扩展、市场/Web 证据、草稿/核验守卫、Markdown/安全 HTML 引用渲染 | 是 |
 | `src/finagent/models.py` | 仅配置 `doubao-seed-evolving` 与 `deepseek-v4-pro` 的 OpenAI 兼容 HTTP 调用、600-token 输出预算和离线降级 | 是 |
 | `src/finagent/retrieval.py` | 中英文 tokenizer、BM25、chunk、索引 JSON 读写 | 是 |
 | `src/finagent/ingest.py` | SEC HTML 文本化、排版归一化、inline-XBRL 噪声过滤和索引构建 | 是 |
@@ -67,7 +67,7 @@ SEC 下载会请求 Apple、Microsoft、NVIDIA、Amazon、Alphabet、Tesla、JPM
 | `verify-models` | 无参数；读取 `.env` 或环境变量 | 以固定 `READY` prompt 验证 Doubao 与 DeepSeek 连通性，不发送金融数据或用户内容 |
 | `index` | `--docs-dir`、`--output`、`--chunk-size` | 从 manifest 对应 HTML 构建本地 chunk 索引 |
 | `market` | `--file`、`--start`、`--end` | 输出日收盘价、区间涨跌幅、平均成交量的 Markdown 表格和来源 URL |
-| `ask` | 问题、`--company`、`--user`、`--web`、`--json`、`--trace`、`--market-file` | 输出带 `[S#]` 引用的 Markdown 或 JSON；可选 Web、用户记忆、执行轨迹 |
+| `ask` | 问题、`--company`、`--user`、`--web`、`--json`、`--html`、`--trace`、`--market-file` | 输出带 `[S#]` 引用的 Markdown、JSON 或安全 HTML；可选 Web、用户记忆、执行轨迹 |
 
 命令层会捕获数据文件、JSON、输入参数和网络相关的可预期异常，向 stderr 输出 `Error: ...` 并返回退出码 2，不把 Python traceback 暴露给普通用户。启动时将 stdout/stderr 配置为 UTF-8，避免 10-K 中的项目符号或智能引号在 Windows GBK 控制台导致失败。
 
@@ -93,7 +93,7 @@ HTML 解析会去掉脚本、样式、inline-XBRL header/hidden/resources/contex
 4. `LocalRetriever` 用 BM25 检索。英文按词，中文连续文本切为滑动 bigram，降低整句中文全匹配失败的概率。
 5. 可选 DuckDuckGo 结果以 `web_search` 独立类型加入；市场快照以 `market_data` 独立类型加入。市场文件丢失或损坏会出现在 `warnings`，不会静默消失。
 6. Doubao `doubao-seed-evolving` 只能根据已给证据起草；DeepSeek V4 再核验并改写。若远程回答没有合法 `[S#]`，系统拒绝它，退回离线提取答案。
-7. Markdown 输出显示答案、Sources、可选 Data warnings、可选 Agent trace；JSON 输出包含同等结构化字段。
+7. Markdown 输出显示答案、Sources、可选 Data warnings、可选 Agent trace；JSON 输出包含同等结构化字段；`--html` 输出独立静态报告，所有动态文本均转义，仅允许绝对 `http/https` 来源 URL 形成链接，并嵌入限制性 CSP meta 策略。
 
 模型密钥只能来自环境变量或 `.env`：`DOUBAO_API_KEY`、`DEEPSEEK_API_KEY`。没有密钥或远程请求失败时，trace 明确记录 `offline` 和原因。运行 `python -m finagent verify-models` 可在面试前验证两家 provider；它只发送固定 `READY` prompt。代码不会打印密钥、Authorization header 或模型请求体。
 
@@ -111,7 +111,7 @@ python -m unittest discover -s tests -v
 python -m compileall -q src scripts tests
 ```
 
-当前 27 项测试覆盖：chunk 来源字段、BM25 排序、中文 bigram、市场快照与坏 CSV、三大指数批量参数、显式偏好与持久化、离线模型状态、模型请求的 600-token 输出预算、规划词影响检索、核验改写草稿、SEC User-Agent、manifest 历史记录保留、XBRL 噪声识别、索引到 Agent、Web URL 解包、Web 证据类型、UTF-8 控制台配置、CLI 友好错误和市场数据 warning、`verify-models` 的成功/失败退出码，以及在存在本地 `.env` 时仍保持测试离线的隔离保护。没有把网络请求写入单元测试；这些调用以 mock 隔离，真实命令记录在 `DEMO_OUTPUTS.md`。
+当前 29 项测试覆盖：chunk 来源字段、BM25 排序、中文 bigram、市场快照与坏 CSV、三大指数批量参数、显式偏好与持久化、离线模型状态、模型请求的 600-token 输出预算、规划词影响检索、核验改写草稿、SEC User-Agent、manifest 历史记录保留、XBRL 噪声识别、索引到 Agent、Web URL 解包、Web 证据类型、UTF-8 控制台配置、CLI 友好错误和市场数据 warning、`verify-models` 的成功/失败退出码、安全 HTML 转义和 CLI HTML 输出，以及在存在本地 `.env` 时仍保持测试离线的隔离保护。没有把网络请求写入单元测试；这些调用以 mock 隔离，真实命令记录在 `DEMO_OUTPUTS.md`。
 
 ## 9. 已知限制与现场使用建议
 
@@ -120,4 +120,4 @@ python -m compileall -q src scripts tests
 - DuckDuckGo 结果仅是搜索片段，可能变化，不能替代原始 filing。
 - `data/memory` 为单用户 demo 的本地明文 JSON，不具备认证、加密、并发控制和删除 API。
 - `download-markets` 依赖公开网络且按年度串行下载；现场网络慢时可优先跑已下载的 CSI 300 或单独重试某一 symbol。
-- 输出支持 Markdown、文本和 JSON；HTML/PPT 没有实现，因为本次优先保证引用、离线运行和数据复现。
+- 输出支持 Markdown、文本、JSON 和安全静态 HTML；PPT 没有实现，因为本次优先保证引用、离线运行和数据复现。HTML 不执行脚本，也不渲染任意用户 HTML。

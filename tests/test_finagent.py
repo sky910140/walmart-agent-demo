@@ -11,7 +11,7 @@ from pathlib import Path
 from urllib.error import HTTPError
 from unittest.mock import patch
 
-from finagent.agent import FinancialAgent, render_markdown
+from finagent.agent import AgentResponse, FinancialAgent, render_html, render_markdown
 from finagent.cli import _configure_console_encoding, main
 from finagent.ingest import build_filing_index, html_to_text, is_xbrl_noise
 from finagent.market import download_major_indices, market_snapshot
@@ -19,6 +19,7 @@ from finagent.memory import PreferenceStore
 from finagent.models import ModelGateway, ModelResponse
 from finagent.retrieval import LocalRetriever, chunk_document, tokenize
 from finagent.sec import download_sec_10k, validate_sec_user_agent
+from finagent.sources import Citation
 from finagent.websearch import WebResult, _result_url
 
 
@@ -287,6 +288,47 @@ class FinancialAgentTests(unittest.TestCase):
         self.assertIn("Market data unavailable", logs.output[0])
         self.assertIn("Market data unavailable", response.warnings[0])
         self.assertIn("## Data warnings", render_markdown(response))
+
+    def test_html_output_escapes_dynamic_content_and_allows_only_http_links(self) -> None:
+        response = AgentResponse(
+            answer="## Evidence-backed answer\n\n- <script>alert('xss')</script> [S1]",
+            citations=[
+                Citation("[S1]", "<img src=x onerror=alert(1)>", "https://www.sec.gov/example?a=1&b=2", "2026-02-20", "sec_10k", "acme", "chunk 1"),
+                Citation("[S2]", "Unsafe source", "javascript:alert(1)", None, "web_search", "web:2", "snippet"),
+            ],
+            preferences=["liquidity risk"],
+            model_trace=[{"stage": "analysis", "provider": "doubao", "model": "doubao-seed-evolving", "used_remote_model": True, "status": "ok"}],
+            evidence_count=2,
+            warnings=["<b>Market source delayed</b>"],
+        )
+
+        output = render_html(response, include_trace=True)
+
+        self.assertIn("Content-Security-Policy", output)
+        self.assertIn("&lt;script&gt;alert(&#x27;xss&#x27;)&lt;/script&gt;", output)
+        self.assertIn("&lt;img src=x onerror=alert(1)&gt;", output)
+        self.assertIn('href="https://www.sec.gov/example?a=1&amp;b=2"', output)
+        self.assertIn('rel="noopener noreferrer"', output)
+        self.assertNotIn("javascript:", output)
+        self.assertNotIn("<script>", output)
+        self.assertIn("&lt;b&gt;Market source delayed&lt;/b&gt;", output)
+
+    def test_cli_html_mode_renders_a_standalone_report(self) -> None:
+        response = AgentResponse(
+            answer="## Evidence-backed answer\n\nA cited finding. [S1]",
+            citations=[Citation("[S1]", "Acme 10-K", "https://www.sec.gov/acme", "2026-02-20", "sec_10k", "acme", "chunk 1")],
+            preferences=[],
+            model_trace=[],
+            evidence_count=1,
+            warnings=[],
+        )
+        stdout = io.StringIO()
+        with patch("finagent.cli.FinancialAgent.ask", return_value=response), redirect_stdout(stdout):
+            exit_code = main(["ask", "test", "--html"])
+
+        self.assertEqual(exit_code, 0)
+        self.assertTrue(stdout.getvalue().lower().startswith("<!doctype html>"))
+        self.assertIn("Evidence-backed answer", stdout.getvalue())
 
     def test_market_evidence_is_prioritized_for_market_questions(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

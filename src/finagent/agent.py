@@ -4,7 +4,9 @@ import json
 import logging
 import re
 from dataclasses import dataclass
+from html import escape
 from pathlib import Path
+from urllib.parse import urlparse
 
 from finagent.market import market_snapshot
 from finagent.memory import PreferenceStore
@@ -278,3 +280,119 @@ def render_markdown(response: AgentResponse, *, include_trace: bool = False) -> 
         )
         output += f"\n\n## Agent trace\n\n{trace}"
     return output
+
+
+def _safe_external_url(value: str) -> str | None:
+    """Only expose absolute HTTP(S) links from external evidence in HTML output."""
+    parsed = urlparse(value)
+    if parsed.scheme in {"http", "https"} and parsed.netloc:
+        return value
+    return None
+
+
+def _render_html_blocks(markdown: str) -> str:
+    """Render the small, controlled Markdown subset emitted by the agent without trusting HTML."""
+    blocks: list[str] = []
+    paragraph: list[str] = []
+    list_items: list[str] = []
+
+    def flush_paragraph() -> None:
+        if paragraph:
+            blocks.append(f"<p>{'<br>\n'.join(escape(line) for line in paragraph)}</p>")
+            paragraph.clear()
+
+    def flush_list() -> None:
+        if list_items:
+            blocks.append("<ul>" + "".join(f"<li>{escape(item)}</li>" for item in list_items) + "</ul>")
+            list_items.clear()
+
+    for line in markdown.splitlines():
+        if line.startswith("## "):
+            flush_paragraph()
+            flush_list()
+            blocks.append(f"<h2>{escape(line[3:])}</h2>")
+        elif line.startswith("# "):
+            flush_paragraph()
+            flush_list()
+            blocks.append(f"<h1>{escape(line[2:])}</h1>")
+        elif line.startswith("- "):
+            flush_paragraph()
+            list_items.append(line[2:])
+        elif not line.strip():
+            flush_paragraph()
+            flush_list()
+        else:
+            flush_list()
+            paragraph.append(line)
+    flush_paragraph()
+    flush_list()
+    return "\n".join(blocks) or "<p>No answer was generated.</p>"
+
+
+def render_html(response: AgentResponse, *, include_trace: bool = False) -> str:
+    """Render a self-contained, safe HTML research report from a structured response."""
+    source_items = []
+    for citation in response.citations:
+        source_url = _safe_external_url(citation.source_url)
+        title = escape(citation.title)
+        if source_url:
+            title = (
+                f'<a href="{escape(source_url, quote=True)}" target="_blank" '
+                f'rel="noopener noreferrer" referrerpolicy="no-referrer">{title}</a>'
+            )
+        details = " | ".join(escape(value) for value in (
+            citation.label,
+            citation.source_type,
+            citation.published_at or "date unavailable",
+            citation.locator or "locator unavailable",
+        ))
+        source_items.append(f"<li>{title}<span class=\"source-meta\">{details}</span></li>")
+    sources = "\n".join(source_items) or "<li>No sources retrieved.</li>"
+
+    preferences = ""
+    if response.preferences:
+        preferences = "<section><h2>Remembered preferences</h2><p>" + escape(", ".join(response.preferences)) + "</p></section>"
+    warnings = ""
+    if response.warnings:
+        warnings = "<section><h2>Data warnings</h2><ul>" + "".join(
+            f"<li>{escape(warning)}</li>" for warning in response.warnings
+        ) + "</ul></section>"
+    trace = ""
+    if include_trace:
+        trace_items = "".join(
+            "<li>" + escape(
+                f"{item['stage']}: {item['provider']} / {item['model']} / "
+                f"remote={item['used_remote_model']} / {item['status']}"
+            ) + "</li>"
+            for item in response.model_trace
+        ) or "<li>No model trace recorded.</li>"
+        trace = f"<section><h2>Agent trace</h2><ul>{trace_items}</ul></section>"
+
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<title>Financial Agent Research Report</title>
+<style>
+body {{ margin: 0; background: #f7f8fa; color: #18212b; font: 16px/1.55 Arial, sans-serif; }}
+main {{ max-width: 900px; margin: 32px auto; padding: 0 24px 40px; }}
+header, section {{ border-bottom: 1px solid #d9dde3; padding: 20px 0; }}
+h1, h2 {{ margin: 0 0 12px; color: #102a43; }}
+h1 {{ font-size: 28px; }} h2 {{ font-size: 20px; }}
+p, ul {{ margin: 0 0 12px; }} li {{ margin: 7px 0; }}
+a {{ color: #0b5cad; }} .source-meta {{ display: block; color: #52606d; font-size: 13px; }}
+</style>
+</head>
+<body>
+<main>
+<header><h1>Financial Agent Research Report</h1><p>Evidence-backed research output. Not investment advice.</p></header>
+<section>{_render_html_blocks(response.answer)}</section>
+<section><h2>Sources</h2><ul>{sources}</ul></section>
+{preferences}
+{warnings}
+{trace}
+</main>
+</body>
+</html>"""

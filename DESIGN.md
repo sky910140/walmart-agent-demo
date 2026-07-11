@@ -14,7 +14,7 @@ flowchart LR
   D["SEC 10-K chunks / CSI 300 CSV / optional web"] --> R
   R --> A["doubao-seed-evolving: evidence-bound draft"]
   A --> V["DeepSeek V4: citation verification"]
-  V --> O["Markdown / JSON answer + source list + trace"]
+  V --> O["Markdown / JSON / HTML report + source list + trace"]
 ```
 
 ## Data ingestion and provenance
@@ -44,6 +44,7 @@ I considered a general ReAct loop with arbitrary tools and autonomous retries, a
 - Preference extraction is intentionally narrow. It may miss nuanced preferences and does not infer profile data.
 - The local JSON store has no encryption, authentication, concurrency control, retention policy, or user deletion endpoint. It is suitable for a single-user demo only.
 - Remote APIs may fail, rate-limit, or use a model deployment name that differs from the configured default. The answer transparently falls back instead of concealing that failure.
+- The HTML report is deliberately a static, stdlib-only presentation layer: all dynamic content is escaped, only absolute HTTP(S) source URLs become links, and a restrictive CSP meta policy is embedded. It is not an interactive web application and does not render arbitrary Markdown or user HTML.
 - This system does not provide investment advice, execute trades, retrieve live security-level A-share prices, or guarantee numerical extraction from SEC tables.
 
 ## First improvements with more time

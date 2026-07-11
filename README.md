@@ -12,7 +12,7 @@ An evidence-first personal financial research agent for public financial documen
 - Local BM25 retrieval over filing chunks. Every chunk retains source URL, filing date, document ID, accession locator, and chunk ID.
 - Long-term, user-scoped preference memory for explicit statements such as “I care about liquidity risk and debt maturity.”
 - A two-model agent loop: DeepSeek V4 plans and verifies citations; `doubao-seed-evolving` drafts from retrieved evidence. No third primary model is used. When either key is absent, the app returns an explicit offline extractive answer instead of pretending an LLM ran.
-- Markdown output, source list, JSON mode, and a non-secret execution trace for demos.
+- Markdown, JSON, and safe standalone HTML report output, each with a source list; a non-secret execution trace supports demos.
 
 This is a research assistant, not investment advice.
 
@@ -105,13 +105,14 @@ python -m finagent ask "How did revenue or profitability change compared with th
 python -m finagent ask "What does the company say about competition?" --company Amazon
 python -m finagent ask "Summarize liquidity or debt-related risks." --company Apple
 python -m finagent ask "What evidence supports this answer?" --company Walmart
+python -m finagent ask "Summarize liquidity or debt-related risks." --company Apple --html > apple-liquidity-report.html
 python -m finagent ask "I care most about liquidity risk and debt maturity." --company JPM --user alice
 python -m finagent ask "What should I focus on?" --company JPM --user alice
 ```
 
 The first `alice` request persists only explicit preferences in `data/memory/preferences.json`; the second reapplies them to its retrieval query. `DEMO_OUTPUTS.md` contains a recorded output from the first market and Apple-risk commands using the 2026-07-10 data snapshot.
 
-For machine integration, append `--json`; for the reviewer-facing explanation of model execution append `--trace`.
+For machine integration, append `--json`; for a self-contained browser report append `--html`; for the reviewer-facing explanation of model execution append `--trace`. HTML output escapes all dynamic text, emits links only for absolute `http/https` source URLs, and includes a restrictive CSP meta policy. `--json` and `--html` are mutually exclusive.
 
 ## Tests
 
@@ -121,7 +122,7 @@ python -m unittest discover -s tests -v
 python -m compileall -q src scripts tests
 ```
 
-The test suite covers source-preserving chunks, relevant retrieval and citations, market calculations and provenance, memory persistence, offline model state, SEC manifest creation, index-to-agent integration, web evidence labelling, and SEC identity validation. `requirements-dev.txt` includes optional `pytest` and `coverage` for environments that use them.
+The test suite covers source-preserving chunks, relevant retrieval and citations, market calculations and provenance, memory persistence, offline model state, SEC manifest creation, index-to-agent integration, web evidence labelling, SEC identity validation, and safe HTML rendering/CLI output. `requirements-dev.txt` includes optional `pytest` and `coverage` for environments that use them.
 
 ## Design and limits
 
