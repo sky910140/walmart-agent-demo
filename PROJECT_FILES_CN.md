@@ -14,7 +14,8 @@
 | `.gitignore` | 忽略 `.env`、虚拟环境、SEC 原始文件、filing 索引和记忆；显式放行三组市场 CSV/元数据 | 是 |
 | `pyproject.toml` | Python 包元数据、`src` 布局和 `finagent` 命令入口 | 是 |
 | `requirements-dev.txt` | 可选 `pytest`、`coverage` 开发依赖；运行时无第三方依赖 | 是 |
-| `README.md` | 英文安装、配置、数据下载、命令、数据来源和限制说明 | 是 |
+| `README.md` | GitHub 首页的中文安装、配置、数据下载、命令、数据来源和限制说明 | 是 |
+| `README_EN.md` | 英文安装、配置、数据下载、命令、数据来源和限制说明 | 是 |
 | `DESIGN.md` | 英文 1-2 页系统设计、取舍、失败模式与后续路线 | 是 |
 | `DEMO_OUTPUTS.md` | 实际运行与确定性测试产生的示例输出 | 是 |
 | `PROJECT_FILES_CN.md` | 本文件，中文文件级和运行级说明 | 是 |
