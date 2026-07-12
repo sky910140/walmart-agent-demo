@@ -15,6 +15,7 @@ data/index/*
 !data/market/
 data/market/*
 !data/market/README.md
+!data/market/README_EN.md
 !data/market/csi300.csv
 !data/market/csi300.csv.meta.json
 !data/market/sse_composite.csv

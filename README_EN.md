@@ -212,4 +212,4 @@ Further reading:
 - [System design](DESIGN.md)
 - [Reproducible demo outputs](DEMO_OUTPUTS.md)
 - [Project structure and implementation map](docs/PROJECT_STRUCTURE_CN.md)
-- [Market data notes](data/market/README.md)
+- [Market data notes](data/market/README_EN.md)
