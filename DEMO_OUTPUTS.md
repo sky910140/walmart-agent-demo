@@ -1,8 +1,8 @@
 # 可复现 Demo 输出
 
-以下结果于 2026-07-10 在本地生成：当时下载十家配置公司的各一份最新 10-K；当前提交索引已扩展为每家公司五年，过滤并索引出 3,978 个 chunk，同时下载了截至 2026-07-10 的沪深 300、上证综指和深证成指数据。当时未配置模型密钥，因此应用明确显示为离线提取模式。
+以下结果于 2026-07-10 在本地生成：当时下载十家配置公司的各一份最新 10-K，得到 3,978 个 chunk；之后提交的索引已扩展为每家公司五年、50 份 filing 和 19,975 个 chunk。市场数据仍为截至 2026-07-10 的沪深 300、上证综指和深证成指快照。当时未配置模型密钥，因此应用明确显示为离线提取模式。
 
-## 2026-07-12 脱敏真实离线现场记录
+## 2026-07-12 脱敏真实离线现场记录（当前五年索引）
 
 命令：
 
@@ -13,10 +13,10 @@ python -m finagent offline-demo
 实际退出码为 0，完整标准输出如下：
 
 ```text
-Data integrity: PASS (historical one-year snapshot: 10 filings, 3978 chunks, 3 market datasets)
+Data integrity: PASS (50 filings, 19975 chunks, 3 market datasets)
 Market deterministic calculation: 1412.12 -> 4780.79 = 238.55%
 Retrieval Hit@5: 5/5
-Golden sentence citations: 13/13 (current golden set; historical output below remains 3-case evidence)
+Golden sentence citations: 13/13
 Offline cited Q&A: PASS (4 cited chunks)
 Memory lifecycle: PASS (write/read/influence/modify/clear)
 OFFLINE DEMO: PASS
