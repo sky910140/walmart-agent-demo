@@ -45,7 +45,7 @@
 | `tests/test_review_readiness.py` | 提交前回归：引用审计、数据快照、非有限数值、跨平台 checksum、记忆闭环和离线 demo | 是 |
 | `data/market/` | 已提交的三组市场 CSV、`.meta.json` 和数据说明；支持离线市场 demo | 是 |
 | `data/DATA_SNAPSHOT.json` | 10-K 与市场数据的受检记录数、日期、来源、口径和 hash | 是 |
-| `evals/golden_answers.json` | 3 组黄金问答、6 个句子的 citation-to-chunk 支持映射 | 是 |
+| `evals/golden_answers.json` | 10 组黄金问答、13 个句子的 citation-to-chunk 支持映射，并校验主体、期间和单位 | 是 |
 | `data/index/` | 已提交的十家公司 `filing_chunks.json` | 是 |
 | `evals/retrieval_cases.json` | 五个代表性问题及预期 chunk | 是 |
 | `.env`、`.env.*` | 本地模型密钥和 SEC 联系信息；仅 `.env.example` 可提交 | 否 |
@@ -131,7 +131,7 @@ python -m unittest discover -s tests -v
 python -m compileall -q src scripts tests
 ```
 
-当前 60 项测试覆盖来源字段、BM25 与 Hit@5、黄金答案紧邻引用和答案全覆盖、数据快照、市场 checksum、CRLF/LF 跨平台校验与 NaN/Inf、记忆闭环、模型分阶段参数、空响应、验证器不可绕过、数字漂移、SEC recent/history 与不完整退出、Web、CLI 和安全 HTML。实际覆盖率以 README 与本次 coverage 报告为准；真实模型 smoke 记录在 `DEMO_OUTPUTS.md`。
+当前 64 项测试覆盖来源字段、BM25 与 Hit@5、黄金答案紧邻引用和答案全覆盖、数据快照、市场 checksum、CRLF/LF 跨平台校验与 NaN/Inf、记忆闭环、模型分阶段参数、空响应、验证器不可绕过、数字漂移、SEC recent/history 与不完整退出、Web、CLI 和安全 HTML。实际覆盖率以 README 与本次 coverage 报告为准；真实模型 smoke 记录在 `DEMO_OUTPUTS.md`。
 
 ## 9. 已知限制与现场使用建议
 

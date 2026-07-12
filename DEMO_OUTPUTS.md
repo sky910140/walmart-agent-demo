@@ -1,6 +1,6 @@
 # 可复现 Demo 输出
 
-以下结果于 2026-07-10 在本地生成：已下载十家配置公司的各一份最新 10-K，过滤并索引出 3,978 个 chunk，同时下载了截至 2026-07-10 的沪深 300、上证综指和深证成指数据。当时未配置模型密钥，因此应用明确显示为离线提取模式。
+以下结果于 2026-07-10 在本地生成：当时下载十家配置公司的各一份最新 10-K；当前提交索引已扩展为每家公司五年，过滤并索引出 3,978 个 chunk，同时下载了截至 2026-07-10 的沪深 300、上证综指和深证成指数据。当时未配置模型密钥，因此应用明确显示为离线提取模式。
 
 ## 2026-07-12 脱敏真实离线现场记录
 
@@ -13,10 +13,10 @@ python -m finagent offline-demo
 实际退出码为 0，完整标准输出如下：
 
 ```text
-Data integrity: PASS (10 filings, 3978 chunks, 3 market datasets)
+Data integrity: PASS (historical one-year snapshot: 10 filings, 3978 chunks, 3 market datasets)
 Market deterministic calculation: 1412.12 -> 4780.79 = 238.55%
 Retrieval Hit@5: 5/5
-Golden sentence citations: 6/6
+Golden sentence citations: 13/13 (current golden set; historical output below remains 3-case evidence)
 Offline cited Q&A: PASS (4 cited chunks)
 Memory lifecycle: PASS (write/read/influence/modify/clear)
 OFFLINE DEMO: PASS
@@ -251,7 +251,7 @@ python -m finagent eval-retrieval
 
 当前仓库内五个 golden questions 的实际结果为 `Retrieval Hit@5: 5/5 (100%)`，覆盖 Apple 流动性、Microsoft 同比业绩、Tesla 风险因素、Amazon 竞争和 JPM cash flow/debt maturity。该小型评测只证明这些代表性路径可回归，不代表开放域语义检索已经解决。
 
-## 黄金答案逐句引用核验
+## 黄金答案逐句引用核验（历史三组输出）
 
 ```powershell
 python -m finagent eval-golden

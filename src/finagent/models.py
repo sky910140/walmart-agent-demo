@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from dataclasses import dataclass
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -9,6 +10,9 @@ from urllib.request import Request, urlopen
 
 MAX_COMPLETION_TOKENS = 600
 DEFAULT_TIMEOUT_SECONDS = 60
+MAX_REMOTE_ATTEMPTS = 2
+RETRY_DELAY_SECONDS = 0.25
+RETRYABLE_HTTP_STATUS = frozenset({408, 425, 429, 500, 502, 503, 504})
 
 
 @dataclass(frozen=True)
@@ -81,14 +85,23 @@ class ModelGateway:
             method="POST",
             headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
         )
-        try:
-            with urlopen(request, timeout=timeout) as response:
-                body = json.loads(response.read().decode("utf-8"))
-            text = body["choices"][0]["message"]["content"].strip()
-            if not text:
-                return ModelResponse("offline", str(settings["model"]), "", False, "Remote model returned empty content")
-            return ModelResponse(provider, str(settings["model"]), text, True)
-        except HTTPError as exc:
-            return ModelResponse("offline", str(settings["model"]), "", False, f"HTTP {exc.code}: remote request unavailable")
-        except (URLError, TimeoutError, KeyError, IndexError, json.JSONDecodeError) as exc:
-            return ModelResponse("offline", str(settings["model"]), "", False, f"{type(exc).__name__}: remote request unavailable")
+        last_error = "remote request unavailable"
+        for attempt in range(MAX_REMOTE_ATTEMPTS):
+            try:
+                with urlopen(request, timeout=timeout) as response:
+                    body = json.loads(response.read().decode("utf-8"))
+                text = body["choices"][0]["message"]["content"].strip()
+                if text:
+                    return ModelResponse(provider, str(settings["model"]), text, True)
+                last_error = "Remote model returned empty content"
+            except HTTPError as exc:
+                last_error = f"HTTP {exc.code}: remote request unavailable"
+                if exc.code not in RETRYABLE_HTTP_STATUS:
+                    return ModelResponse("offline", str(settings["model"]), "", False, last_error)
+            except (URLError, TimeoutError, KeyError, IndexError, json.JSONDecodeError) as exc:
+                last_error = f"{type(exc).__name__}: remote request unavailable"
+
+            if attempt + 1 < MAX_REMOTE_ATTEMPTS:
+                time.sleep(RETRY_DELAY_SECONDS * (attempt + 1))
+
+        return ModelResponse("offline", str(settings["model"]), "", False, last_error)

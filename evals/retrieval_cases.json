@@ -1,37 +1,39 @@
 [
-  {
-    "company": "Apple",
-    "question": "Summarize liquidity and debt-related risks.",
-    "expected_chunk_ids": [
-      "aapl-2025-09-27-10k-000032019325000079:0105"
-    ]
-  },
-  {
-    "company": "Microsoft",
-    "question": "How did revenue or profitability change compared with the prior year?",
-    "expected_chunk_ids": [
-      "msft-2025-06-30-10k-000095017025100235:0139"
-    ]
-  },
-  {
-    "company": "Tesla",
-    "question": "What are this company's main risk factors?",
-    "expected_chunk_ids": [
-      "tsla-2025-12-31-10k-000162828026003952:0008"
-    ]
-  },
-  {
-    "company": "Amazon",
-    "question": "What does the company say about competition?",
-    "expected_chunk_ids": [
-      "amzn-2025-12-31-10k-000101872426000004:0021"
-    ]
-  },
-  {
-    "company": "JPM",
-    "question": "Summarize cash flow and debt maturity risks.",
-    "expected_chunk_ids": [
-      "jpm-2025-12-31-10k-000162828026008131:0474"
-    ]
-  }
+    {
+        "company":  "Apple",
+        "question":  "Summarize liquidity and debt-related risks.",
+        "expected_chunk_ids":  [
+                                   "aapl-2025-09-27-10k-000032019325000079:0105"
+                               ]
+    },
+    {
+        "company":  "Microsoft",
+        "question":  "How did revenue or profitability change compared with the prior year?",
+        "expected_chunk_ids":  [
+                                   "msft-2025-06-30-10k-000095017025100235:0139",
+                                   "msft-2024-06-30-10k-000095017024087843:0162"
+                               ]
+    },
+    {
+        "company":  "Tesla",
+        "question":  "What are this company\u0027s main risk factors?",
+        "expected_chunk_ids":  [
+                                   "tsla-2025-12-31-10k-000162828026003952:0008",
+                                   "tsla-2025-12-31-10k-000162828026003952:0005"
+                               ]
+    },
+    {
+        "company":  "Amazon",
+        "question":  "What does the company say about competition?",
+        "expected_chunk_ids":  [
+                                   "amzn-2025-12-31-10k-000101872426000004:0021"
+                               ]
+    },
+    {
+        "company":  "JPM",
+        "question":  "Summarize cash flow and debt maturity risks.",
+        "expected_chunk_ids":  [
+                                   "jpm-2025-12-31-10k-000162828026008131:0474"
+                               ]
+    }
 ]

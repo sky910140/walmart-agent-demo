@@ -83,8 +83,9 @@ def evaluate_golden_answers(index_path: Path, cases_path: Path) -> dict[str, obj
             sentence = str(support.get("sentence", "")).strip()
             labels = support.get("citation_labels")
             phrases = support.get("required_evidence_phrases")
-            if not sentence or not isinstance(labels, list) or not labels or not isinstance(phrases, list) or not phrases:
-                raise ValueError("Each sentence requires citation_labels and required_evidence_phrases")
+            metadata = support.get("metadata")
+            if not sentence or not isinstance(labels, list) or not labels or not isinstance(phrases, list) or not phrases or not isinstance(metadata, dict):
+                raise ValueError("Each sentence requires citation_labels, required_evidence_phrases, and metadata")
             if any(not isinstance(label, str) or not re.fullmatch(r"S\d+", label) for label in labels):
                 raise ValueError("Citation labels must use the S<number> format")
             if any(not isinstance(phrase, str) or not phrase.strip() for phrase in phrases):
@@ -103,7 +104,14 @@ def evaluate_golden_answers(index_path: Path, cases_path: Path) -> dict[str, obj
             evidence_text = "\n".join(chunk.text for chunk in mapped_chunks if chunk is not None)
             normalized_evidence = _normalize_for_support(evidence_text)
             missing_phrases = [phrase for phrase in phrases if _normalize_for_support(phrase) not in normalized_evidence]
-            supported = not unknown_labels and all(chunk is not None for chunk in mapped_chunks) and cited_in_answer and not missing_phrases
+            metadata_errors = _metadata_errors(metadata, case, mapped_chunks, sentence, evidence_text)
+            supported = (
+                not unknown_labels
+                and all(chunk is not None for chunk in mapped_chunks)
+                and cited_in_answer
+                and not missing_phrases
+                and not metadata_errors
+            )
             sentence_total += 1
             sentence_passed += int(supported)
             sentence_details.append({
@@ -114,6 +122,7 @@ def evaluate_golden_answers(index_path: Path, cases_path: Path) -> dict[str, obj
                 "cited_in_answer": cited_in_answer,
                 "missing_labels": unknown_labels,
                 "missing_evidence_phrases": missing_phrases,
+                "metadata_errors": metadata_errors,
                 "supported": supported,
             })
         covered = [False] * len(answer)
@@ -154,6 +163,58 @@ def _find_cited_sentence(answer: str, sentence: str) -> tuple[list[str], tuple[i
     labels = CITATION_LABEL_RE.findall(answer[sentence_end:span_end])
     return labels, (start, span_end)
 
+
+def _metadata_errors(
+    metadata: object,
+    case: dict[str, object],
+    mapped_chunks: list[object],
+    sentence: str,
+    evidence_text: str,
+) -> list[str]:
+    """Check subject, reporting period and unit claims against mapped evidence."""
+    if metadata is None:
+        return []
+    if not isinstance(metadata, dict):
+        return ["metadata"]
+    errors: list[str] = []
+    subject = str(metadata.get("subject", "")).strip()
+    if not subject:
+        errors.append("subject")
+    else:
+        subject_haystack = " ".join(
+            [str(case.get("company", "")), *(getattr(chunk, "title", "") for chunk in mapped_chunks), *(getattr(chunk, "document_id", "") for chunk in mapped_chunks)]
+        ).casefold()
+        if subject.casefold() not in subject_haystack:
+            errors.append("subject")
+
+    period = str(metadata.get("period", "")).strip()
+    if not period:
+        errors.append("period")
+    elif period not in {"not_stated", "qualitative"}:
+        normalized_evidence = _normalize_for_support(evidence_text)
+        source_periods = {str(getattr(chunk, "published_at", "") or "").casefold() for chunk in mapped_chunks}
+        period_ok = period.casefold() in source_periods or period.casefold() in normalized_evidence
+        if not period_ok and re.fullmatch(r"\d{4}-\d{2}-\d{2}", period):
+            period_ok = period[:4] in normalized_evidence and any(period[:4] in value for value in source_periods)
+        if not period_ok:
+            errors.append("period")
+
+    unit = str(metadata.get("unit", "")).strip().casefold()
+    if not unit:
+        errors.append("unit")
+    elif unit not in {"qualitative", "not_applicable"}:
+        unit_haystack = f"{sentence} {evidence_text}".casefold()
+        unit_checks = {
+            "usd": "$" in unit_haystack or "dollar" in unit_haystack,
+            "percent": "%" in unit_haystack or "percent" in unit_haystack,
+            "billion": "billion" in unit_haystack,
+            "million": "million" in unit_haystack,
+            "shares": "share" in unit_haystack,
+        }
+        requested = [token for token in unit.split() if token in unit_checks]
+        if not requested or not all(unit_checks[token] for token in requested):
+            errors.append("unit")
+    return errors
 
 def _normalize_for_support(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip().casefold()

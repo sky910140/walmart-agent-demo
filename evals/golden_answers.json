@@ -4,24 +4,19 @@
     "company": "Apple",
     "question": "Summarize liquidity and debt-related risks.",
     "answer": "Apple disclosed $132.4 billion of cash, cash equivalents, and marketable securities as of September 27, 2025. [S1]\nApple also disclosed $91.3 billion of fixed-rate notes, including $12.4 billion payable within 12 months. [S1]",
-    "citations": {
-      "S1": "aapl-2025-09-27-10k-000032019325000079:0105"
-    },
+    "citations": {"S1": "aapl-2025-09-27-10k-000032019325000079:0105"},
     "sentence_support": [
       {
         "sentence": "Apple disclosed $132.4 billion of cash, cash equivalents, and marketable securities as of September 27, 2025.",
         "citation_labels": ["S1"],
-        "required_evidence_phrases": [
-          "cash, cash equivalents and marketable securities, which totaled $132.4 billion as of September 27, 2025"
-        ]
+        "required_evidence_phrases": ["cash, cash equivalents and marketable securities, which totaled $132.4 billion as of September 27, 2025"],
+        "metadata": {"subject": "Apple", "period": "September 27, 2025", "unit": "USD billion"}
       },
       {
         "sentence": "Apple also disclosed $91.3 billion of fixed-rate notes, including $12.4 billion payable within 12 months.",
         "citation_labels": ["S1"],
-        "required_evidence_phrases": [
-          "aggregate principal amount of $91.3 billion",
-          "with $12.4 billion payable within 12 months"
-        ]
+        "required_evidence_phrases": ["aggregate principal amount of $91.3 billion", "with $12.4 billion payable within 12 months"],
+        "metadata": {"subject": "Apple", "period": "September 27, 2025", "unit": "USD billion"}
       }
     ]
   },
@@ -30,19 +25,19 @@
     "company": "Microsoft",
     "question": "How did revenue or profitability change compared with the prior year?",
     "answer": "For fiscal 2025 versus fiscal 2024, Microsoft disclosed that revenue increased $36.6 billion, or 15%. [S1]\nMicrosoft disclosed that operating income increased $19.1 billion, or 17%. [S1]",
-    "citations": {
-      "S1": "msft-2025-06-30-10k-000095017025100235:0139"
-    },
+    "citations": {"S1": "msft-2025-06-30-10k-000095017025100235:0139"},
     "sentence_support": [
       {
         "sentence": "For fiscal 2025 versus fiscal 2024, Microsoft disclosed that revenue increased $36.6 billion, or 15%.",
         "citation_labels": ["S1"],
-        "required_evidence_phrases": ["Revenue increased $36.6 billion or 15%"]
+        "required_evidence_phrases": ["Revenue increased $36.6 billion or 15%"],
+        "metadata": {"subject": "Microsoft", "period": "Fiscal Year 2025 Compared with Fiscal Year 2024", "unit": "USD billion percent"}
       },
       {
         "sentence": "Microsoft disclosed that operating income increased $19.1 billion, or 17%.",
         "citation_labels": ["S1"],
-        "required_evidence_phrases": ["Operating income increased $19.1 billion or 17%"]
+        "required_evidence_phrases": ["Operating income increased $19.1 billion or 17%"],
+        "metadata": {"subject": "Microsoft", "period": "Fiscal Year 2025 Compared with Fiscal Year 2024", "unit": "USD billion percent"}
       }
     ]
   },
@@ -51,25 +46,111 @@
     "company": "Amazon",
     "question": "What does the company say about competition?",
     "answer": "Amazon disclosed that competition continues to intensify as new business models and well-funded competitors enter. [S1]\nAmazon warned that competition may require higher spending or lower prices, which could materially reduce sales and profits. [S1]",
-    "citations": {
-      "S1": "amzn-2025-12-31-10k-000101872426000004:0021"
-    },
+    "citations": {"S1": "amzn-2025-12-31-10k-000101872426000004:0021"},
     "sentence_support": [
       {
         "sentence": "Amazon disclosed that competition continues to intensify as new business models and well-funded competitors enter.",
         "citation_labels": ["S1"],
-        "required_evidence_phrases": [
-          "Competition continues to intensify, including with the development of new business models and the entry of new and well-funded competitors"
-        ]
+        "required_evidence_phrases": ["Competition continues to intensify, including with the development of new business models and the entry of new and well-funded competitors"],
+        "metadata": {"subject": "Amazon", "period": "not_stated", "unit": "qualitative"}
       },
       {
         "sentence": "Amazon warned that competition may require higher spending or lower prices, which could materially reduce sales and profits.",
         "citation_labels": ["S1"],
-        "required_evidence_phrases": [
-          "we may be required to increase our spending or lower prices",
-          "could materially reduce our sales and profits"
-        ]
+        "required_evidence_phrases": ["we may be required to increase our spending or lower prices", "could materially reduce our sales and profits"],
+        "metadata": {"subject": "Amazon", "period": "not_stated", "unit": "qualitative"}
       }
     ]
+  },
+  {
+    "id": "tesla-forward-looking-risks",
+    "company": "Tesla",
+    "question": "Which operational and financial topics does Tesla identify as forward-looking risks?",
+    "answer": "Tesla stated that its forward-looking statements cover supply chain constraints, competition, future revenues, profitability, and capital adequacy. [S1]",
+    "citations": {"S1": "tsla-2025-12-31-10k-000162828026003952:0007"},
+    "sentence_support": [{
+      "sentence": "Tesla stated that its forward-looking statements cover supply chain constraints, competition, future revenues, profitability, and capital adequacy.",
+      "citation_labels": ["S1"],
+      "required_evidence_phrases": ["statements concerning supply chain constraints, our strategy, competition, future operations and production capacity, future financial position, future revenues, projected costs, profitability, expected cost reductions, capital adequacy"],
+      "metadata": {"subject": "Tesla", "period": "not_stated", "unit": "qualitative"}
+    }]
+  },
+  {
+    "id": "walmart-supply-chain-macro",
+    "company": "Walmart",
+    "question": "What macroeconomic and supply-chain factors does Walmart discuss?",
+    "answer": "Walmart identified inflation or deflation, supply chain challenges, tariffs, and recessionary pressures as forward-looking business conditions. [S1]",
+    "citations": {"S1": "wmt-2026-01-31-10k-000010416926000055:0009"},
+    "sentence_support": [{
+      "sentence": "Walmart identified inflation or deflation, supply chain challenges, tariffs, and recessionary pressures as forward-looking business conditions.",
+      "citation_labels": ["S1"],
+      "required_evidence_phrases": ["inflation or deflation", "the impact of supply chain challenges, tariffs and recessionary pressures"],
+      "metadata": {"subject": "Walmart", "period": "not_stated", "unit": "qualitative"}
+    }]
+  },
+  {
+    "id": "alphabet-revenue-margin-expectations",
+    "company": "Alphabet",
+    "question": "Which revenue and margin topics appear in Alphabet's forward-looking statements?",
+    "answer": "Alphabet identified business and revenue growth, factors affecting that growth, and fluctuations in revenue and margins as forward-looking topics. [S1]",
+    "citations": {"S1": "googl-2025-12-31-10k-000165204426000018:0009"},
+    "sentence_support": [{
+      "sentence": "Alphabet identified business and revenue growth, factors affecting that growth, and fluctuations in revenue and margins as forward-looking topics.",
+      "citation_labels": ["S1"],
+      "required_evidence_phrases": ["expectations regarding the growth of our business and revenues", "fluctuations in our revenues and margins"],
+      "metadata": {"subject": "Alphabet", "period": "not_stated", "unit": "qualitative"}
+    }]
+  },
+  {
+    "id": "nvidia-research-development-investment",
+    "company": "NVIDIA",
+    "question": "How much has NVIDIA invested in research and development?",
+    "answer": "NVIDIA disclosed that it has invested more than $76.7 billion in research and development since inception. [S1]",
+    "citations": {"S1": "nvda-2026-01-25-10k-000104581026000021:0013"},
+    "sentence_support": [{
+      "sentence": "NVIDIA disclosed that it has invested more than $76.7 billion in research and development since inception.",
+      "citation_labels": ["S1"],
+      "required_evidence_phrases": ["invested over $76.7 billion in research and development since our inception"],
+      "metadata": {"subject": "NVIDIA", "period": "since our inception", "unit": "USD billion"}
+    }]
+  },
+  {
+    "id": "berkshire-cash-flow-periods",
+    "company": "Berkshire",
+    "question": "Which periods are covered by Berkshire's consolidated statements of cash flows?",
+    "answer": "Berkshire's consolidated statements of cash flows cover the years ended December 31, 2025, 2024, and 2023. [S1]",
+    "citations": {"S1": "brk-b-2025-12-31-10k-000119312526083899:0006"},
+    "sentence_support": [{
+      "sentence": "Berkshire's consolidated statements of cash flows cover the years ended December 31, 2025, 2024, and 2023.",
+      "citation_labels": ["S1"],
+      "required_evidence_phrases": ["Consolidated Statements of Cash Flows- Years Ended December 31, 2025, December 31, 2024, and December 31, 2023"],
+      "metadata": {"subject": "Berkshire", "period": "December 31, 2025", "unit": "not_applicable"}
+    }]
+  },
+  {
+    "id": "jpmorgan-business-segments-competition",
+    "company": "JPM",
+    "question": "How does JPMorgan describe its reporting segments and competitive environment?",
+    "answer": "JPMorgan identified three reportable business segments and stated that it operates in highly competitive environments. [S1]",
+    "citations": {"S1": "jpm-2025-12-31-10k-000162828026008131:0009"},
+    "sentence_support": [{
+      "sentence": "JPMorgan identified three reportable business segments and stated that it operates in highly competitive environments.",
+      "citation_labels": ["S1"],
+      "required_evidence_phrases": ["three reportable business segments", "operate in highly competitive environments"],
+      "metadata": {"subject": "JPM", "period": "December 31, 2025", "unit": "qualitative"}
+    }]
+  },
+  {
+    "id": "exxon-energy-competition",
+    "company": "Exxon",
+    "question": "How does Exxon describe competition in energy and petrochemicals?",
+    "answer": "Exxon described the energy and petrochemical industries as highly competitive within those industries and against other industries supplying energy, fuel, and chemical needs. [S1]",
+    "citations": {"S1": "xom-2025-12-31-10k-000003408826000045:0007"},
+    "sentence_support": [{
+      "sentence": "Exxon described the energy and petrochemical industries as highly competitive within those industries and against other industries supplying energy, fuel, and chemical needs.",
+      "citation_labels": ["S1"],
+      "required_evidence_phrases": ["The energy and petrochemical industries are highly competitive", "supplying the energy, fuel, and chemical needs of industrial and individual consumers"],
+      "metadata": {"subject": "Exxon", "period": "not_stated", "unit": "qualitative"}
+    }]
   }
 ]

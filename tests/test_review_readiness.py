@@ -81,6 +81,7 @@ class ReviewReadinessTests(unittest.TestCase):
                     "sentence": "Revenue increased $2 billion or 10% in 2025.",
                     "citation_labels": ["S1"],
                     "required_evidence_phrases": ["Revenue increased $2 billion or 10%"],
+                    "metadata": {"subject": "Acme", "period": "2025", "unit": "USD billion percent"},
                 }],
             }]), encoding="utf-8")
 
@@ -126,6 +127,25 @@ class ReviewReadinessTests(unittest.TestCase):
         self.assertEqual(report["passed"], 0)
         self.assertFalse(report["details"][0]["answer_fully_covered"])
 
+    def test_golden_answers_reject_subject_period_or_unit_mismatch(self) -> None:
+        report = _evaluate_golden_case(
+            "Acme revenue increased $2 billion in 2025. [S1]",
+            [{
+                "sentence": "Acme revenue increased $2 billion in 2025.",
+                "citation_labels": ["S1"],
+                "required_evidence_phrases": ["Revenue increased $2 billion"],
+                "metadata": {
+                    "subject": "Other Company",
+                    "period": "2024-12-31",
+                    "unit": "percent",
+                },
+            }],
+        )
+
+        sentence = report["details"][0]["sentences"][0]
+        self.assertFalse(sentence["supported"])
+        self.assertEqual(set(sentence["metadata_errors"]), {"subject", "period", "unit"})
+
     def test_repository_data_integrity_matches_checked_in_snapshot(self) -> None:
         root = Path(__file__).resolve().parents[1]
 
@@ -136,8 +156,8 @@ class ReviewReadinessTests(unittest.TestCase):
         )
 
         self.assertTrue(report["valid"])
-        self.assertEqual(report["filings"]["document_count"], 10)
-        self.assertEqual(report["filings"]["chunk_count"], 3978)
+        self.assertEqual(report["filings"]["document_count"], 50)
+        self.assertEqual(report["filings"]["chunk_count"], 19975)
         self.assertEqual(report["markets"]["dataset_count"], 3)
 
     def test_market_response_labels_disclosed_and_deterministically_calculated_values(self) -> None:
@@ -318,6 +338,8 @@ def _evaluate_golden_case(answer: str, sentence_support: list[dict[str, object]]
         index_path = root / "index.json"
         index_path.write_text(json.dumps([chunk.to_dict()]), encoding="utf-8")
         cases_path = root / "golden.json"
+        for support in sentence_support:
+            support.setdefault("metadata", {"subject": "Acme", "period": "2026-02-20", "unit": "qualitative"})
         cases_path.write_text(json.dumps([{
             "id": "acme-results",
             "company": "Acme",

@@ -12,11 +12,11 @@ This project does not provide investment advice, execute trades, or treat model 
 
 | Area | Current result |
 | --- | --- |
-| SEC corpus | Latest 10-K for 10 companies, 3,978 searchable chunks |
+| SEC corpus | Five years of 10-K filings for 10 companies, 50 filings and 19,975 searchable chunks |
 | China market data | CSI 300, Shanghai Composite, Shenzhen Component, 20+ years of daily close and volume |
 | Retrieval evaluation | 5 golden questions, Hit@5 = 5/5 |
-| Golden answer audit | 3 Q&A cases, 6/6 sentences verified against cited evidence phrases |
-| Automated tests | 60/60 passing, 88% total coverage |
+| Golden answer audit | 10 Q&A cases, 13/13 sentences verified against cited evidence phrases |
+| Automated tests | 64/64 passing, 88% total coverage |
 | Python compatibility | 3.11, 3.13, and 3.14 verified locally |
 | Multi-model path | DeepSeek planning → Doubao drafting → DeepSeek verification |
 | Strict remote path | Doubao + DeepSeek three-stage smoke reached `remote_verified` |
@@ -83,10 +83,10 @@ python -m finagent offline-demo
 Expected output:
 
 ```text
-Data integrity: PASS (10 filings, 3978 chunks, 3 market datasets)
+Data integrity: PASS (50 filings, 19975 chunks, 3 market datasets)
 Market deterministic calculation: 1412.12 -> 4780.79 = 238.55%
 Retrieval Hit@5: 5/5
-Golden sentence citations: 6/6
+Golden sentence citations: 13/13
 Offline cited Q&A: PASS (4 cited chunks)
 Memory lifecycle: PASS (write/read/influence/modify/clear)
 OFFLINE DEMO: PASS
@@ -192,13 +192,13 @@ The HTML renderer escapes dynamic text, links only absolute HTTP(S) sources, and
 | Public Web | request-local `web_search` evidence | title, result URL, snippet; never silently promoted to parsed SEC evidence |
 | User preferences | local `data/memory/preferences.json` | explicit allow-listed preferences only; never committed |
 
-`data/DATA_SNAPSHOT.json` is the checked 2026-07-12 snapshot. It lists ticker, issuer, CIK, report date, filing date, accession, SEC URL, and chunk count for every 10-K, plus source, download time, coverage dates, row count, and SHA-256 for all three market datasets. CSV close and volume are source-disclosed observations; period return and average volume are deterministic Python calculations; model prose is interpretation only. `python -m finagent data-integrity` recomputes and checks the snapshot.
+`data/DATA_SNAPSHOT.json` is the checked 2026-07-12 snapshot. It lists ticker, issuer, CIK, report date, filing date, accession, SEC URL, and chunk count for five years of 10-K filings from each of ten companies, plus source, download time, coverage dates, row count, and SHA-256 for all three market datasets. CSV close and volume are source-disclosed observations; period return and average volume are deterministic Python calculations; model prose is interpretation only. `python -m finagent data-integrity` recomputes and checks the snapshot.
 
 Raw SEC HTML is excluded to keep the repository small. The download and rebuild path remains reproducible:
 
 ```powershell
 $env:SEC_USER_AGENT = "FinancialAgent your-email@example.com"
-python scripts/download_sec_10k.py --years 1 --output-dir sample_docs/sec_10k
+python scripts/download_sec_10k.py --years 5 --output-dir sample_docs/sec_10k
 python -m finagent index --docs-dir sample_docs/sec_10k --output data/index/filing_chunks.json
 python -m finagent download-markets --output-dir data/market --start-year 2005
 ```
@@ -219,7 +219,7 @@ python -m finagent offline-demo
 
 Coverage includes SEC recent/history downloads, incomplete-download exit behavior, XBRL noise filtering, BM25 and financial phrase handling, market dates, checksums, NaN/Inf rejection, preference memory, per-stage model budgets, empty model responses, mandatory verification, numeric drift, adjacent sentence-citation binding, full golden-answer coverage, Web evidence classification, CLI errors, and safe HTML rendering.
 
-GitHub Actions runs compilation, coverage, retrieval evaluation, golden-answer verification, data integrity, and the offline demo on Python 3.11 and 3.13 without model credentials or external network access.
+GitHub Actions runs compilation, coverage, retrieval evaluation, golden-answer verification, data integrity, and the offline demo on Ubuntu Python 3.11/3.13 and Windows Python 3.11 without model credentials or external network access.
 
 ## Repository Layout
 
@@ -227,7 +227,7 @@ GitHub Actions runs compilation, coverage, retrieval evaluation, golden-answer v
 src/finagent/                 Agent, retrieval, models, data, memory, and output
 src/finagent/integrity.py     SEC/market snapshot and integrity gates
 scripts/                      SEC and market download entry points
-tests/                        60 unit, integration, and review-readiness tests
+tests/                        64 unit, integration, and review-readiness tests
 evals/                        Retrieval and golden-answer evaluation sets
 data/index/                   Checked-in SEC retrieval index
 data/market/                  Three index CSV files and provenance metadata

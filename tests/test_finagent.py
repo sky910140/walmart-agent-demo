@@ -22,7 +22,7 @@ from finagent.models import ModelGateway, ModelResponse
 from finagent.retrieval import LocalRetriever, chunk_document, tokenize
 from finagent.sec import download_sec_10k, validate_sec_user_agent
 from finagent.sources import Citation
-from finagent.websearch import WebResult, _result_url
+from finagent.websearch import WebResult, _result_url, search_public_web
 
 
 class FinancialAgentTests(unittest.TestCase):
@@ -131,6 +131,15 @@ class FinancialAgentTests(unittest.TestCase):
 
         self.assertEqual(preferences, ["cash flow", "valuation"])
 
+    def test_corrupt_memory_filters_non_string_preferences(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            memory_path = Path(directory) / "memory.json"
+            memory_path.write_text(json.dumps({"alice": ["cash flow", {"unexpected": "object"}, 7]}), encoding="utf-8")
+
+            preferences = PreferenceStore(memory_path).get("alice")
+
+        self.assertEqual(preferences, ["cash flow"])
+
     def test_model_gateway_is_explicit_when_keys_are_missing(self) -> None:
         gateway = ModelGateway(doubao_api_key=None, deepseek_api_key=None)
         result = gateway.complete("doubao", "system", "user")
@@ -152,6 +161,29 @@ class FinancialAgentTests(unittest.TestCase):
 
         self.assertFalse(result.used_remote_model)
         self.assertEqual(result.error, "HTTP 404: remote request unavailable")
+
+    def test_model_gateway_retries_one_transient_failure(self) -> None:
+        class FakeResponse:
+            def __enter__(self) -> "FakeResponse":
+                return self
+
+            def __exit__(self, exc_type: object, exc: object, traceback: object) -> None:
+                return None
+
+            @staticmethod
+            def read() -> bytes:
+                return b'{"choices": [{"message": {"content": "[S1] recovered"}}]}'
+
+        with patch("finagent.models.urlopen", side_effect=[TimeoutError("temporary"), FakeResponse()]) as urlopen, patch(
+            "finagent.models.time.sleep"
+        ) as sleep:
+            result = ModelGateway(doubao_api_key="test-key", deepseek_api_key=None).complete(
+                "doubao", "system", "user",
+            )
+
+        self.assertTrue(result.used_remote_model)
+        self.assertEqual(urlopen.call_count, 2)
+        sleep.assert_called_once()
 
     def test_model_gateway_treats_empty_content_as_remote_failure(self) -> None:
         class EmptyResponse:
@@ -727,6 +759,29 @@ class FinancialAgentTests(unittest.TestCase):
 
         self.assertEqual(exit_code, 2)
         self.assertIn("did not complete all required remote stages", stderr.getvalue())
+
+    def test_web_search_parses_fixed_duckduckgo_html_fixture(self) -> None:
+        class FakeResponse:
+            def __enter__(self) -> "FakeResponse":
+                return self
+
+            def __exit__(self, exc_type: object, exc: object, traceback: object) -> None:
+                return None
+
+            @staticmethod
+            def read() -> bytes:
+                return (
+                    b'<a class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.sec.gov%2FArchives%2Fexample.htm">'
+                    b"Apple 10-K</a>"
+                    b'<div class="result__snippet">Annual report and risk factors.</div>'
+                )
+
+        with patch("finagent.websearch.urlopen", return_value=FakeResponse()):
+            results = search_public_web("Apple 10-K", limit=1)
+
+        self.assertEqual(results, [WebResult(
+            "Apple 10-K", "https://www.sec.gov/Archives/example.htm", "Annual report and risk factors."
+        )])
 
     def test_web_search_unwraps_duckduckgo_redirects(self) -> None:
         self.assertEqual(

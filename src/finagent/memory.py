@@ -82,7 +82,7 @@ class PreferenceStore:
         if not isinstance(data, dict):
             return {}
         return {
-            user_id: sorted(value for value in preferences if value in ALLOWED_PREFERENCES)
+            user_id: sorted(value for value in preferences if isinstance(value, str) and value in ALLOWED_PREFERENCES)
             for user_id, preferences in data.items()
             if isinstance(user_id, str) and USER_ID_RE.fullmatch(user_id) and isinstance(preferences, list)
         }
